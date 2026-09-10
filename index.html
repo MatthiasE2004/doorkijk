@@ -1,0 +1,1665 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0E1116">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Doorkijk — levend fotoboek</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0E1116; --surface:#171C24; --surface2:#1F2631; --line:#2A3340; --line2:#394556;
+  --text:#E6EBF2; --dim:#8B97A8; --dimmer:#5C6878;
+  --safelight:#FF4D3D; --emulsion:#F2E8D5; --ok:#5FD3A0; --sky:#6BA8FF;
+  --r:10px; --top:52px; --bot:58px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:"Inter Tight",system-ui,sans-serif; font-size:15px; line-height:1.4;
+  overscroll-behavior:none;
+}
+h1,h2,h3{font-family:"Archivo",sans-serif;font-weight:700;letter-spacing:-.02em;margin:0}
+.mono{font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* ---------------- top bar ---------------- */
+#topbar{
+  position:fixed;top:0;left:0;right:0;z-index:40;height:calc(env(safe-area-inset-top) + var(--top));
+  padding:env(safe-area-inset-top) 10px 0 10px;
+  background:rgba(14,17,22,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:8px;
+}
+#back{background:none;border:0;color:var(--text);font-size:20px;line-height:1;padding:6px 8px;cursor:pointer;border-radius:8px}
+#back:active{background:var(--surface2)}
+.tb-title{flex:1;min-width:0}
+.tb-title b{display:block;font:700 16px/1.15 "Archivo",sans-serif;letter-spacing:-.02em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-title span{display:block;font:600 10px/1.3 "JetBrains Mono",monospace;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--dimmer);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-act{display:flex;gap:4px;flex:none}
+.icon-btn{background:none;border:1px solid var(--line);color:var(--dim);border-radius:8px;
+  padding:6px 9px;font:600 11px/1.2 "JetBrains Mono",monospace;cursor:pointer;letter-spacing:.06em}
+.icon-btn:active{background:var(--surface2)}
+
+/* ---------------- layout ---------------- */
+main{
+  padding:calc(env(safe-area-inset-top) + var(--top) + 12px) 12px
+          calc(env(safe-area-inset-bottom) + var(--bot) + 20px);
+  max-width:760px;margin:0 auto;
+}
+.view{display:none}.view.on{display:block}
+
+/* ---------------- bottom tabs ---------------- */
+#tabbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:40;
+  height:calc(env(safe-area-inset-bottom) + var(--bot));
+  padding-bottom:env(safe-area-inset-bottom);
+  background:rgba(14,17,22,.94);backdrop-filter:blur(12px);border-top:1px solid var(--line);
+  display:flex;
+}
+#tabbar button{
+  flex:1;background:none;border:0;color:var(--dimmer);cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  font:600 10px/1 "Inter Tight",sans-serif;letter-spacing:.04em;padding:0;
+}
+#tabbar button svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round}
+#tabbar button.on{color:var(--text)}
+#tabbar button.on svg{stroke:var(--safelight)}
+
+/* ---------------- primitives ---------------- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:13px;margin-bottom:10px}
+.card.tight{padding:11px}
+.eyebrow{font:600 10px/1 "JetBrains Mono",monospace;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--dimmer);margin:0 0 8px;display:flex;align-items:center;gap:8px}
+.eyebrow.sp{margin-top:18px}
+.eyebrow em{font-style:normal;color:var(--dim);letter-spacing:.06em;text-transform:none;font-family:"Inter Tight",sans-serif;font-size:11px}
+.hint{color:var(--dim);font-size:12.5px;margin:6px 0 0;line-height:1.45}
+.hint.warn{color:var(--safelight)}
+.hint:first-child{margin-top:0}
+button.btn{
+  font:600 13.5px/1 "Inter Tight",sans-serif;border-radius:8px;padding:10px 14px;cursor:pointer;
+  border:1px solid var(--line2);background:var(--surface2);color:var(--text);
+}
+button.btn:active{transform:translateY(1px)}
+button.btn.primary{background:var(--safelight);border-color:var(--safelight);color:#160604}
+button.btn.ghost{background:none;border-color:var(--line);color:var(--dim)}
+button.btn.sm{padding:7px 10px;font-size:12.5px}
+button.btn.wide{width:100%}
+button.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row.tight{gap:6px}
+.spread{display:flex;align-items:center;justify-content:space-between;gap:10px}
+label.field{display:block;margin:10px 0 0}
+label.field:first-child{margin-top:0}
+label.field>span{display:block;font:500 11.5px/1 "Inter Tight";color:var(--dim);margin-bottom:5px}
+input[type=text],input[type=password],input[type=url],select,textarea{
+  width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;
+  padding:9px 10px;color:var(--text);font:400 13.5px/1.3 "Inter Tight",sans-serif;
+}
+textarea{resize:vertical;min-height:64px;font-family:"JetBrains Mono",monospace;font-size:12px}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--line2)}
+.empty{border:1px dashed var(--line);border-radius:var(--r);padding:22px 16px;text-align:center;color:var(--dim);font-size:13px}
+.pill{font:600 9.5px/1 "JetBrains Mono",monospace;letter-spacing:.1em;text-transform:uppercase;
+  padding:4px 6px;border-radius:5px;background:var(--surface2);color:var(--dim);border:1px solid var(--line);white-space:nowrap}
+.pill.good{color:var(--ok);border-color:#2C4A3E;background:#16241E}
+.pill.warn{color:var(--safelight);border-color:#4A2822;background:#2A1512}
+.pill.info{color:var(--sky);border-color:#26405F;background:#141E2B}
+progress{width:100%;height:5px;accent-color:var(--safelight);margin-top:8px}
+hr.sep{border:0;border-top:1px solid var(--line);margin:12px 0}
+code.url{display:block;font:400 11px/1.5 "JetBrains Mono",monospace;color:var(--sky);
+  background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:8px 9px;
+  word-break:break-all;margin-top:8px}
+
+/* ---------------- home ---------------- */
+.hero{
+  border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px;
+  background:linear-gradient(150deg,#1E2530,#151A22 60%);
+  display:flex;align-items:center;gap:13px;
+}
+.hero .lens{
+  width:46px;height:46px;border-radius:50%;flex:none;position:relative;
+  background:radial-gradient(circle at 35% 32%,#3A4658,#11151B 70%);
+  border:1px solid var(--line2);
+}
+.hero .lens::after{content:"";position:absolute;inset:12px;border-radius:50%;
+  background:radial-gradient(circle at 40% 35%,rgba(255,77,61,.9),rgba(255,77,61,.15) 70%)}
+.hero .txt{flex:1;min-width:0}
+.hero h2{font-size:16px;margin-bottom:3px}
+.hero p{margin:0;font-size:12.5px;color:var(--dim)}
+
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.quick button{
+  background:var(--surface);border:1px solid var(--line);border-radius:10px;color:var(--text);
+  padding:12px 6px 10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:7px;
+  font:600 11.5px/1.2 "Inter Tight",sans-serif;text-align:center;
+}
+.quick button:active{background:var(--surface2)}
+.quick svg{width:20px;height:20px;stroke:var(--safelight);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:9px}
+.pcard{
+  background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;
+  cursor:pointer;display:flex;flex-direction:column;text-align:left;padding:0;color:inherit;font:inherit;
+}
+.pcard:active{border-color:var(--line2)}
+.pcard .thumb{aspect-ratio:4/3;background:var(--surface2);position:relative;overflow:hidden}
+.pcard .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.pcard .thumb .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  color:var(--dimmer);font:600 10px/1 "JetBrains Mono",monospace;letter-spacing:.1em}
+.pcard .thumb img+.ph{display:none}
+.pcard .thumb .cnt{position:absolute;right:6px;bottom:6px;background:rgba(0,0,0,.62);
+  border:1px solid rgba(255,255,255,.14);border-radius:5px;padding:3px 5px;
+  font:600 9.5px/1 "JetBrains Mono",monospace;color:#fff}
+.pcard .body{padding:9px 10px 10px}
+.pcard .body strong{display:block;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcard .body .sub{margin-top:5px;display:flex;gap:4px;flex-wrap:wrap}
+.pcard.add{border-style:dashed;align-items:center;justify-content:center;min-height:126px;align-self:start;
+  color:var(--dim);gap:8px;padding:14px;font:600 12.5px/1.3 "Inter Tight";flex-direction:column}
+.pcard.add svg{width:22px;height:22px;stroke:var(--dim);fill:none;stroke-width:1.7;stroke-linecap:round}
+
+/* ---------------- segmented ---------------- */
+.seg{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:3px;margin-bottom:12px;gap:2px}
+.seg button{
+  flex:1;background:none;border:0;color:var(--dim);cursor:pointer;border-radius:6px;padding:8px 4px;
+  font:600 12px/1 "Inter Tight",sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.seg button.on{background:var(--surface2);color:var(--text)}
+.sect{display:none}.sect.on{display:block}
+
+/* ---------------- item list ---------------- */
+.item{display:flex;gap:10px;align-items:center;padding:9px;border:1px solid var(--line);
+  border-radius:var(--r);background:var(--surface);margin-bottom:7px}
+.item img{width:52px;height:52px;object-fit:cover;border-radius:6px;background:var(--surface2);flex:none}
+.item .meta{flex:1;min-width:0}
+.item .meta strong{display:block;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .meta small{color:var(--dim);font:400 11px/1.45 "JetBrains Mono",monospace;display:block;margin-top:3px}
+.item .act{flex:none;display:flex;gap:5px}
+
+/* ---------------- filmstrip ---------------- */
+.strip{position:relative;margin:12px 0 4px;user-select:none;touch-action:none}
+.strip-rail{
+  position:relative;height:54px;border-radius:6px;overflow:hidden;
+  background:
+    repeating-linear-gradient(90deg,transparent 0 14px,rgba(230,235,242,.07) 14px 20px) top/100% 9px no-repeat,
+    repeating-linear-gradient(90deg,transparent 0 14px,rgba(230,235,242,.07) 14px 20px) bottom/100% 9px no-repeat,
+    var(--surface2);
+  border:1px solid var(--line);
+}
+.strip-frames{position:absolute;inset:9px 0;display:flex;opacity:.85}
+.strip-frames img{height:100%;flex:1 1 0;min-width:0;object-fit:cover;filter:saturate(.85)}
+.strip-dim{position:absolute;top:9px;bottom:9px;background:rgba(14,17,22,.72);pointer-events:none}
+.strip-handle{position:absolute;top:-3px;bottom:-3px;width:14px;margin-left:-7px;cursor:ew-resize;
+  display:flex;align-items:center;justify-content:center}
+.strip-handle::after{content:"";width:3px;height:100%;border-radius:2px;background:var(--safelight)}
+.strip-handle.out::after{background:var(--emulsion)}
+.strip-play{position:absolute;top:6px;bottom:6px;width:2px;margin-left:-1px;background:#fff;
+  pointer-events:none;box-shadow:0 0 6px rgba(255,255,255,.6)}
+.strip-legend{display:flex;justify-content:space-between;font:600 11px/1 "JetBrains Mono",monospace;color:var(--dim);margin-top:7px}
+.strip-legend b{color:var(--safelight);font-weight:600}
+.strip-legend i{color:var(--emulsion);font-style:normal}
+video.prev{width:100%;border-radius:8px;background:#000;display:block;aspect-ratio:16/9;object-fit:contain}
+
+/* ---------------- sheet ---------------- */
+.sheet{position:fixed;inset:0;z-index:90;background:var(--bg);display:none;overflow-y:auto;
+  -webkit-overflow-scrolling:touch}
+.sheet.on{display:block}
+.sheet-bar{position:sticky;top:0;z-index:5;background:rgba(14,17,22,.95);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);padding:calc(env(safe-area-inset-top) + 10px) 12px 10px;
+  display:flex;align-items:center;gap:10px}
+.sheet-bar h2{flex:1;font-size:15px}
+.sheet-body{padding:12px 12px calc(env(safe-area-inset-bottom) + 28px);max-width:760px;margin:0 auto}
+
+/* ---------------- AR ---------------- */
+#ar{position:fixed;inset:0;z-index:100;background:#000;display:none}
+#ar.on{display:block}
+#ar-container{position:absolute;inset:0}
+#ar-container video,#ar-container canvas{position:absolute;inset:0;width:100%!important;height:100%!important;object-fit:cover}
+.ar-top{position:absolute;top:0;left:0;right:0;padding:calc(env(safe-area-inset-top) + 12px) 12px 12px;
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  background:linear-gradient(rgba(0,0,0,.6),transparent);z-index:3}
+.ar-badge{font:600 11px/1 "JetBrains Mono",monospace;letter-spacing:.09em;text-transform:uppercase;
+  color:#fff;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.2);padding:7px 10px;
+  border-radius:6px;max-width:62vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ar-badge.live{color:var(--safelight);border-color:var(--safelight)}
+.ar-bottom{position:absolute;left:0;right:0;bottom:0;z-index:3;
+  padding:14px 12px calc(env(safe-area-inset-bottom) + 14px);
+  background:linear-gradient(transparent,rgba(0,0,0,.75));
+  opacity:0;transition:opacity .2s;pointer-events:none}
+.ar-bottom.on{opacity:1;pointer-events:auto}
+.ar-seek{width:100%;height:26px;position:relative;cursor:pointer;touch-action:none}
+.ar-seek .track{position:absolute;top:11px;left:0;right:0;height:4px;border-radius:2px;background:rgba(255,255,255,.25)}
+.ar-seek .buf{position:absolute;top:11px;left:0;height:4px;border-radius:2px;background:rgba(255,255,255,.4)}
+.ar-seek .fill{position:absolute;top:11px;left:0;height:4px;border-radius:2px;background:var(--safelight)}
+.ar-seek .knob{position:absolute;top:6px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:#fff}
+.ar-ctl{display:flex;align-items:center;gap:9px;margin-top:5px}
+.ar-ctl button{width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.25);
+  background:rgba(0,0,0,.45);color:#fff;font-size:16px;cursor:pointer;flex:none}
+.ar-ctl .time{margin-left:auto;font:600 12px/1 "JetBrains Mono",monospace;color:#fff}
+.ar-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  text-align:center;padding:40px;color:rgba(255,255,255,.75);font-size:14px;z-index:2;pointer-events:none}
+.ar-spin{position:absolute;top:50%;left:50%;width:34px;height:34px;margin:-17px;z-index:4;display:none;
+  border:3px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:sp .8s linear infinite}
+.ar-spin.on{display:block}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ---------------- overlays ---------------- */
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + var(--bot) + 14px);transform:translateX(-50%);
+  background:var(--surface2);border:1px solid var(--line2);border-radius:8px;padding:10px 15px;
+  font-size:13px;z-index:500;opacity:0;transition:opacity .2s;pointer-events:none;max-width:88vw;text-align:center}
+.toast.on{opacity:1}
+#busy{position:fixed;inset:0;z-index:400;background:rgba(14,17,22,.86);backdrop-filter:blur(4px);
+  display:none;align-items:center;justify-content:center;padding:24px}
+#busy.on{display:flex}
+#busy .box{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;width:100%;max-width:340px}
+#busy h3{font-size:14px;margin-bottom:8px}
+#busy p{margin:0;font:400 12px/1.5 "JetBrains Mono",monospace;color:var(--dim);word-break:break-word}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header id="topbar">
+  <button id="back" hidden aria-label="Terug">‹</button>
+  <div class="tb-title"><b id="tb-name">Doorkijk</b><span id="tb-sub">levend fotoboek</span></div>
+  <div class="tb-act"><button class="icon-btn" id="lang-btn">NL</button></div>
+</header>
+
+<main>
+  <!-- ==================== HOME ==================== -->
+  <section class="view on" id="v-home">
+    <div class="hero">
+      <div class="lens"></div>
+      <div class="txt"><h2 data-i18n="home.heroT">Foto's die bewegen</h2>
+        <p data-i18n="home.heroP">Richt de camera op een afgedrukte foto en de video speelt af op het papier.</p></div>
+    </div>
+
+    <div class="quick">
+      <button id="q-scan">
+        <svg viewBox="0 0 24 24"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><circle cx="12" cy="12" r="3.2"/></svg>
+        <span data-i18n="nav.scan">Scannen</span></button>
+      <button id="q-new">
+        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        <span data-i18n="home.newProject">Nieuw project</span></button>
+      <button id="q-open">
+        <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>
+        <span data-i18n="home.openLink">Link openen</span></button>
+    </div>
+
+    <div class="eyebrow"><span data-i18n="home.mine">Mijn projecten</span><em id="mine-count"></em></div>
+    <div class="grid" id="grid-mine"></div>
+
+    <div class="eyebrow sp" data-i18n="home.shared">Gedeelde projecten</div>
+    <div class="grid" id="grid-shared"></div>
+    <p class="hint" data-i18n="home.sharedHint">Projecten die iemand anders online heeft gezet. Stream ze direct of zet ze offline.</p>
+  </section>
+
+  <!-- ==================== SCAN ==================== -->
+  <section class="view" id="v-scan">
+    <div class="eyebrow" data-i18n="scan.pick">Kies een project om te scannen</div>
+    <div id="scan-list"></div>
+    <p class="hint" data-i18n="scan.tip">Houd de telefoon 20–40 cm boven de pagina. Vermijd direct lamplicht op het papier — dat spiegelt en breekt de herkenning.</p>
+  </section>
+
+  <!-- ==================== PROJECT ==================== -->
+  <section class="view" id="v-project">
+    <div class="seg" id="p-seg"></div>
+    <div class="sect" id="s-frag"></div>
+    <div class="sect" id="s-print"></div>
+    <div class="sect" id="s-share"></div>
+    <div class="sect" id="s-offline"></div>
+  </section>
+
+  <!-- ==================== SETTINGS ==================== -->
+  <section class="view" id="v-settings">
+    <div class="eyebrow" data-i18n="set.lang">Taal</div>
+    <div class="card tight"><div class="row">
+      <button class="btn sm" data-lang="nl">Nederlands</button>
+      <button class="btn sm" data-lang="en">English</button>
+    </div></div>
+
+    <div class="eyebrow sp" data-i18n="set.github">GitHub-account voor publiceren</div>
+    <div class="card">
+      <p class="hint" data-i18n="set.githubP">Nodig om video's te uploaden. Maak een fine-grained token met alleen “Contents: read and write” op de repository die je hiervoor gebruikt.</p>
+      <label class="field"><span data-i18n="set.owner">Gebruikersnaam of organisatie</span><input type="text" id="gh-owner" placeholder="matthias" autocapitalize="none" autocorrect="off"></label>
+      <label class="field"><span data-i18n="set.repo">Repository</span><input type="text" id="gh-repo" placeholder="doorkijk-media" autocapitalize="none" autocorrect="off"></label>
+      <label class="field"><span data-i18n="set.branch">Branch</span><input type="text" id="gh-branch" placeholder="main" autocapitalize="none" autocorrect="off"></label>
+      <label class="field"><span data-i18n="set.token">Token</span><input type="password" id="gh-token" placeholder="github_pat_…" autocapitalize="none" autocorrect="off"></label>
+      <div class="row" style="margin-top:12px">
+        <button class="btn primary sm" id="gh-save" data-i18n="set.save">Opslaan</button>
+        <button class="btn sm" id="gh-test" data-i18n="set.test">Verbinding testen</button>
+        <button class="btn ghost sm" id="gh-clear" data-i18n="set.clearTok">Token wissen</button>
+      </div>
+      <p class="hint" id="gh-status"></p>
+      <p class="hint warn" data-i18n="set.tokenWarn">Het token blijft alleen op dit apparaat, in de opslag van de browser. Het komt nooit in een project of gedeelde link terecht.</p>
+    </div>
+
+    <div class="eyebrow sp" data-i18n="set.storage">Opslag op dit apparaat</div>
+    <div class="card tight">
+      <p class="hint mono" id="stor-line">—</p>
+      <div class="row" style="margin-top:10px">
+        <button class="btn ghost sm" id="stor-refresh" data-i18n="set.refresh">Vernieuwen</button>
+      </div>
+    </div>
+
+    <div class="eyebrow sp" data-i18n="set.about">Over</div>
+    <div class="card tight">
+      <p class="hint" data-i18n="set.aboutP">Doorkijk 2.0 — beeldherkenning met MindAR, video via WebGL. Alles draait in de browser; er is geen server die jouw materiaal ziet, behalve de opslag die je zelf kiest.</p>
+      <p class="hint mono" id="app-url"></p>
+    </div>
+  </section>
+</main>
+
+<nav id="tabbar">
+  <button data-go="#/" id="tab-home">
+    <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20a1 1 0 0 0 1 1H10v-6h4v6h3.5a1 1 0 0 0 1-1V9.5"/></svg>
+    <span data-i18n="nav.home">Start</span></button>
+  <button data-go="#/scan" id="tab-scan">
+    <svg viewBox="0 0 24 24"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><circle cx="12" cy="12" r="3.2"/></svg>
+    <span data-i18n="nav.scan">Scannen</span></button>
+  <button data-go="#/settings" id="tab-set">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
+    <span data-i18n="nav.more">Meer</span></button>
+</nav>
+
+<!-- ==================== EDITOR SHEET ==================== -->
+<div class="sheet" id="sheet-ed">
+  <div class="sheet-bar">
+    <button class="icon-btn" id="ed-close" data-i18n="ed.cancel">Annuleren</button>
+    <h2 data-i18n="ed.title">Fragment</h2>
+    <button class="btn primary sm" id="save-item" data-i18n="ed.save">Opslaan</button>
+  </div>
+  <div class="sheet-body">
+    <video class="prev" id="ed-video" playsinline preload="metadata"></video>
+    <div class="strip">
+      <div class="strip-rail" id="strip">
+        <div class="strip-frames" id="strip-frames"></div>
+        <div class="strip-dim" id="dim-l" style="left:0;width:0"></div>
+        <div class="strip-dim" id="dim-r" style="right:0;width:0"></div>
+        <div class="strip-play" id="playhead" style="left:0"></div>
+        <div class="strip-handle" id="h-in" style="left:0"></div>
+        <div class="strip-handle out" id="h-out" style="left:100%"></div>
+      </div>
+    </div>
+    <div class="strip-legend">
+      <span><span data-i18n="ed.start">start</span> <b id="lab-in">0:00.0</b></span>
+      <span class="mono" id="lab-dur">—</span>
+      <span><span data-i18n="ed.end">eind</span> <i id="lab-out">0:00.0</i></span>
+    </div>
+    <div class="row" style="margin-top:11px">
+      <button class="btn ghost sm" id="ed-play" data-i18n="ed.play">Fragment afspelen</button>
+      <button class="btn ghost sm" id="set-in" data-i18n="ed.setIn">Start hier</button>
+      <button class="btn ghost sm" id="set-out" data-i18n="ed.setOut">Eind hier</button>
+    </div>
+
+    <div class="eyebrow sp" data-i18n="ed.printImg">Afdrukbeeld</div>
+    <div class="card">
+      <p class="hint" data-i18n="ed.printP">Dit is de foto die je afdrukt en in het boek plakt. Hij is tegelijk de trigger.</p>
+      <div class="row" style="margin-top:10px">
+        <button class="btn sm" id="grab-frame" data-i18n="ed.grab">Huidig beeld gebruiken</button>
+        <button class="btn ghost sm" id="pick-photo" data-i18n="ed.own">Eigen foto kiezen</button>
+      </div>
+      <input type="file" id="file-photo" accept="image/*" hidden>
+      <div class="row" style="margin-top:11px;align-items:flex-start" id="poster-wrap" hidden>
+        <img id="poster-prev" alt="" style="width:104px;border-radius:6px;border:1px solid var(--line)">
+        <div style="flex:1;min-width:140px">
+          <span class="pill" id="poster-dims">—</span>
+          <p class="hint" data-i18n="ed.printTip">Druk af op <strong>mat</strong> papier, zonder bijsnijden. Glans en bijgesneden randen breken de herkenning.</p>
+        </div>
+      </div>
+    </div>
+
+    <label class="field"><span data-i18n="ed.name">Titel</span><input type="text" id="ed-title" placeholder="Eerste stapjes, mei 2025"></label>
+    <p class="hint mono" id="ed-size"></p>
+  </div>
+</div>
+
+<!-- ==================== AR ==================== -->
+<div id="ar">
+  <div id="ar-container"></div>
+  <div class="ar-hint" id="ar-hint" data-i18n="ar.aim">Richt op een foto uit het boek</div>
+  <div class="ar-spin" id="ar-spin"></div>
+  <div class="ar-top">
+    <span class="ar-badge" id="ar-title" data-i18n="ar.searching">Zoeken…</span>
+    <button class="btn sm" id="ar-close" style="background:rgba(0,0,0,.45);border-color:rgba(255,255,255,.25)" data-i18n="ar.close">Sluiten</button>
+  </div>
+  <div class="ar-bottom" id="ar-bottom">
+    <div class="ar-seek" id="ar-seek">
+      <div class="track"></div><div class="buf" id="seek-buf"></div>
+      <div class="fill" id="seek-fill"></div><div class="knob" id="seek-knob"></div>
+    </div>
+    <div class="ar-ctl">
+      <button id="ar-toggle">❚❚</button>
+      <button id="ar-mute">🔇</button>
+      <span class="time mono" id="ar-time">0:00 / 0:00</span>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="busy"><div class="box">
+  <h3 id="busy-t">…</h3><p id="busy-p"></p>
+  <progress id="busy-bar" value="0" max="1"></progress>
+  <div class="row" style="margin-top:12px"><button class="btn ghost sm" id="busy-cancel" data-i18n="busy.cancel">Afbreken</button></div>
+</div></div>
+
+<input type="file" id="file-video" accept="video/*" hidden>
+
+<script type="importmap">
+{"imports":{
+  "three":"https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/",
+  "mindar-image-three":"https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js",
+  "mindar-image":"https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js"
+}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { MindARThree } from 'mindar-image-three';
+
+/* ==================================================================
+   1. TAAL / LANGUAGE
+   ================================================================== */
+const STR = {
+nl:{
+ 'nav.home':'Start','nav.scan':'Scannen','nav.more':'Meer',
+ 'app.sub':'levend fotoboek',
+ 'home.heroT':"Foto's die bewegen",
+ 'home.heroP':'Richt de camera op een afgedrukte foto en de video speelt af op het papier.',
+ 'home.newProject':'Nieuw project','home.openLink':'Link openen',
+ 'home.mine':'Mijn projecten','home.shared':'Gedeelde projecten',
+ 'home.sharedHint':'Projecten die iemand anders online heeft gezet. Stream ze direct of zet ze offline.',
+ 'home.emptyMine':'Nog geen project. Maak er een en voeg je eerste video toe.',
+ 'home.emptyShared':'Nog niets geopend. Plak een gedeelde link om een project van iemand anders te bekijken.',
+ 'home.addProject':'Nieuw project',
+ 'scan.pick':'Kies een project om te scannen',
+ 'scan.tip':'Houd de telefoon 20–40 cm boven de pagina. Vermijd direct lamplicht op het papier — dat spiegelt en breekt de herkenning.',
+ 'scan.none':'Nog geen project klaar om te scannen. Maak een project klaar bij Afdrukken, of open een gedeelde link.',
+ 'scan.start':'Camera starten','scan.notReady':'Nog niet klaargemaakt',
+ 'pill.ready':'Klaar','pill.notReady':'Niet klaar',
+ 'seg.frag':'Fragmenten','seg.print':'Afdrukken','seg.share':'Delen','seg.offline':'Offline','seg.source':'Bron',
+ 'proj.add':'Video toevoegen','proj.empty':'Nog geen fragmenten. Voeg een video toe om te beginnen.',
+ 'proj.rename':'Naam wijzigen','proj.delete':'Project verwijderen','proj.del':'Wis',
+ 'proj.confirmDel':'Project “%s” en alles erin verwijderen?',
+ 'proj.confirmItem':'“%s” verwijderen?',
+ 'proj.newName':'Naam van het project',
+ 'print.compile':'Klaarmaken voor scannen','print.export':"Afdrukbestanden opslaan",
+ 'print.p':"Elk project wordt apart herkend. Houd het onder de 12 foto's, anders wordt het zoeken merkbaar traag.",
+ 'print.stale':'Er is iets veranderd sinds de laatste keer klaarmaken. Maak opnieuw klaar.',
+ 'print.ready':'Klaar. %s foto’s herkenbaar.','print.never':'Nog niet klaargemaakt.',
+ 'print.notRated':'nog niet beoordeeld','print.good':'goed te herkennen','print.poor':'weinig detail — kies een scherper beeld',
+ 'print.points':'%s punten','print.inProject':'In dit project',
+ 'share.h':'Online zetten','share.hp':"Upload de video's zodat anderen dit project met één link kunnen openen. Zonder upload blijft alles alleen op dit apparaat.",
+ 'share.needCompile':'Maak het project eerst klaar bij Afdrukken — de herkenningsdata hoort bij de upload.',
+ 'share.needGh':'Vul eerst je GitHub-gegevens in bij Meer → GitHub-account.',
+ 'share.folder':'Map in de repository','share.quality':'Videokwaliteit','share.q.orig':'Origineel (geen bewerking)',
+ 'share.q.1080':'1080p','share.q.720':'720p (aanbevolen)','share.q.480':'480p (kleinste)',
+ 'share.qP':'Alles behalve “Origineel” knipt het fragment eruit en codeert het opnieuw. Dat maakt bestanden vaak 10× kleiner en streamen veel sneller. Het duurt ongeveer zo lang als het fragment zelf.',
+ 'share.fmt':'Dit apparaat codeert naar %s','share.upload':'Publiceren naar GitHub','share.republish':'Opnieuw publiceren','share.bundle':'Bundel downloaden (andere host)',
+ 'share.bundleP':'Krijg een ZIP met project.json, de video’s, foto’s en herkenningsdata. Pak hem uit op een NAS, Netlify, S3 of elke webserver en open de link naar project.json in Doorkijk.',
+ 'share.bundleCors':'Let op: de server moet CORS toestaan (Access-Control-Allow-Origin: *), anders kan de video niet op het papier getekend worden.',
+ 'share.live':'Gepubliceerd','share.link':'Deelbare link','share.copy':'Link kopiëren','share.share':'Delen…','share.copied':'Gekopieerd.',
+ 'share.manifest':'Directe project-URL',
+ 'busy.cancel':'Afbreken',
+ 'up.prep':'Voorbereiden…','up.encode':'Video %s van %s omzetten…','up.push':'%s uploaden…','up.manifest':'Project publiceren…','up.done':'Gepubliceerd.',
+ 'off.h':'Offline gebruiken','off.stream':'Streamen','off.local':'Offline beschikbaar',
+ 'off.streamP':'Video’s worden tijdens het scannen van internet gehaald. Snel te openen, maar er kan even geladen worden en je hebt bereik nodig.',
+ 'off.localP':'Alles staat op dit apparaat. Werkt zonder internet en start direct — dit is duidelijk de prettigste manier om te scannen.',
+ 'off.download':'Alles downloaden (%s)','off.remove':'Gedownloade bestanden wissen','off.downloading':'Downloaden %s van %s…',
+ 'off.done':'Klaar. Dit project werkt nu offline.','off.forget':'Project verwijderen uit de lijst',
+ 'src.h':'Bron','src.by':'Gemaakt door','src.opened':'Geopend op','src.refresh':'Bijwerken vanaf de bron','src.refreshed':'Bijgewerkt.',
+ 'open.h':'Project openen','open.p':'Plak een gedeelde Doorkijk-link of de directe URL naar een project.json.',
+ 'open.go':'Openen','open.bad':'Geen geldig Doorkijk-project op die URL.','open.cors':'De server weigert het verzoek (CORS). Vraag om een link die kruislings opvraagbaar is.',
+ 'open.dup':'Dit project was al geopend — bijgewerkt.','open.ok':'Project toegevoegd.',
+ 'ed.title':'Fragment','ed.cancel':'Annuleren','ed.save':'Opslaan','ed.start':'start','ed.end':'eind',
+ 'ed.play':'Fragment afspelen','ed.pause':'Pauzeren','ed.setIn':'Start hier','ed.setOut':'Eind hier',
+ 'ed.printImg':'Afdrukbeeld','ed.printP':'Dit is de foto die je afdrukt en in het boek plakt. Hij is tegelijk de trigger.',
+ 'ed.grab':'Huidig beeld gebruiken','ed.own':'Eigen foto kiezen','ed.name':'Titel',
+ 'ed.printTip':'Druk af op <strong>mat</strong> papier, zonder bijsnijden. Glans en bijgesneden randen breken de herkenning.',
+ 'ed.needPoster':'Kies eerst een afdrukbeeld.','ed.saved':'Opgeslagen. Vergeet niet opnieuw klaar te maken.',
+ 'ed.loop':'lus','ed.src':'Bronbestand: %s',
+ 'ed.badVideo':'Deze video kan de browser niet afspelen. Kies een MP4 (H.264) of MOV uit je galerij.',
+ 'ar.aim':'Richt op een foto uit het boek','ar.searching':'Zoeken…','ar.close':'Sluiten',
+ 'ar.noCam':'Camera niet beschikbaar: %s','ar.needHttps':'De camera werkt alleen op een https-adres. Zet de app online (bijvoorbeeld GitHub Pages) en open hem daar.',
+ 'set.lang':'Taal','set.github':'GitHub-account voor publiceren',
+ 'set.githubP':'Nodig om video’s te uploaden. Maak een fine-grained token met alleen “Contents: read and write” op de repository die je hiervoor gebruikt.',
+ 'set.owner':'Gebruikersnaam of organisatie','set.repo':'Repository','set.branch':'Branch','set.token':'Token',
+ 'set.save':'Opslaan','set.test':'Verbinding testen','set.clearTok':'Token wissen','set.refresh':'Vernieuwen',
+ 'set.tokenWarn':'Het token blijft alleen op dit apparaat, in de opslag van de browser. Het komt nooit in een project of gedeelde link terecht.',
+ 'set.storage':'Opslag op dit apparaat','set.about':'Over',
+ 'set.aboutP':'Doorkijk 2.0 — beeldherkenning met MindAR, video via WebGL. Alles draait in de browser; er is geen server die jouw materiaal ziet, behalve de opslag die je zelf kiest.',
+ 'set.saved':'Opgeslagen.','set.okRepo':'Verbonden met %s — schrijven toegestaan.','set.failRepo':'Mislukt: %s',
+ 'set.storLine':'%s gebruikt van ongeveer %s beschikbaar.',
+ 'gen.items':'%s fragmenten','gen.item':'1 fragment','gen.of':'van','gen.cancelled':'Afgebroken.','gen.failed':'Mislukt: %s',
+ 'gen.yes':'Ja','gen.no':'Nee','gen.back':'Terug'
+},
+en:{
+ 'nav.home':'Home','nav.scan':'Scan','nav.more':'More',
+ 'app.sub':'living photo book',
+ 'home.heroT':'Photos that move',
+ 'home.heroP':'Point the camera at a printed photo and the video plays on the paper.',
+ 'home.newProject':'New project','home.openLink':'Open a link',
+ 'home.mine':'My projects','home.shared':'Shared projects',
+ 'home.sharedHint':'Projects someone else put online. Stream them, or take them offline.',
+ 'home.emptyMine':'No projects yet. Create one and add your first video.',
+ 'home.emptyShared':"Nothing opened yet. Paste a shared link to view someone else's project.",
+ 'home.addProject':'New project',
+ 'scan.pick':'Pick a project to scan',
+ 'scan.tip':'Hold the phone 20–40 cm above the page. Keep direct lamplight off the paper — glare breaks recognition.',
+ 'scan.none':'No project is ready to scan yet. Prepare one under Print, or open a shared link.',
+ 'scan.start':'Start camera','scan.notReady':'Not prepared yet',
+ 'pill.ready':'Ready','pill.notReady':'Not ready',
+ 'seg.frag':'Clips','seg.print':'Print','seg.share':'Share','seg.offline':'Offline','seg.source':'Source',
+ 'proj.add':'Add video','proj.empty':'No clips yet. Add a video to get started.',
+ 'proj.rename':'Rename','proj.delete':'Delete project','proj.del':'Delete',
+ 'proj.confirmDel':'Delete project “%s” and everything in it?',
+ 'proj.confirmItem':'Delete “%s”?',
+ 'proj.newName':'Project name',
+ 'print.compile':'Prepare for scanning','print.export':'Save print files',
+ 'print.p':'Each project is recognised separately. Keep it under 12 photos or the search gets noticeably slow.',
+ 'print.stale':'Something changed since the last preparation. Prepare it again.',
+ 'print.ready':'Ready. %s photos recognisable.','print.never':'Not prepared yet.',
+ 'print.notRated':'not rated yet','print.good':'easy to recognise','print.poor':'little detail — pick a sharper image',
+ 'print.points':'%s points','print.inProject':'In this project',
+ 'share.h':'Put it online','share.hp':'Upload the videos so others can open this project with one link. Without uploading, everything stays on this device only.',
+ 'share.needCompile':'Prepare the project under Print first — the tracking data belongs with the upload.',
+ 'share.needGh':'Fill in your GitHub details first under More → GitHub account.',
+ 'share.folder':'Folder in the repository','share.quality':'Video quality','share.q.orig':'Original (no re-encode)',
+ 'share.q.1080':'1080p','share.q.720':'720p (recommended)','share.q.480':'480p (smallest)',
+ 'share.qP':'Anything other than “Original” cuts the clip out and re-encodes it. That often makes files 10× smaller and much quicker to stream. It takes roughly as long as the clip itself.',
+ 'share.fmt':'This device encodes to %s','share.upload':'Publish to GitHub','share.republish':'Publish again','share.bundle':'Download bundle (any host)',
+ 'share.bundleP':'Get a ZIP with project.json, the videos, photos and tracking data. Unpack it on a NAS, Netlify, S3 or any web server and open the link to project.json in Doorkijk.',
+ 'share.bundleCors':'Note: the server must allow CORS (Access-Control-Allow-Origin: *), otherwise the video cannot be drawn onto the paper.',
+ 'share.live':'Published','share.link':'Shareable link','share.copy':'Copy link','share.share':'Share…','share.copied':'Copied.',
+ 'share.manifest':'Direct project URL',
+ 'busy.cancel':'Cancel',
+ 'up.prep':'Preparing…','up.encode':'Converting video %s of %s…','up.push':'Uploading %s…','up.manifest':'Publishing project…','up.done':'Published.',
+ 'off.h':'Offline use','off.stream':'Streaming','off.local':'Available offline',
+ 'off.streamP':'Videos are fetched from the internet while scanning. Quick to open, but expect some buffering and you need a connection.',
+ 'off.localP':'Everything sits on this device. Works without internet and starts instantly — clearly the nicer way to scan.',
+ 'off.download':'Download everything (%s)','off.remove':'Delete downloaded files','off.downloading':'Downloading %s of %s…',
+ 'off.done':'Done. This project now works offline.','off.forget':'Remove project from the list',
+ 'src.h':'Source','src.by':'Made by','src.opened':'Opened on','src.refresh':'Update from source','src.refreshed':'Updated.',
+ 'open.h':'Open a project','open.p':'Paste a shared Doorkijk link, or the direct URL to a project.json.',
+ 'open.go':'Open','open.bad':'No valid Doorkijk project at that URL.','open.cors':'The server refuses the request (CORS). Ask for a link that allows cross-origin access.',
+ 'open.dup':'This project was already open — refreshed.','open.ok':'Project added.',
+ 'ed.title':'Clip','ed.cancel':'Cancel','ed.save':'Save','ed.start':'start','ed.end':'end',
+ 'ed.play':'Play clip','ed.pause':'Pause','ed.setIn':'Start here','ed.setOut':'End here',
+ 'ed.printImg':'Print image','ed.printP':'This is the photo you print and paste into the book. It is also the trigger.',
+ 'ed.grab':'Use current frame','ed.own':'Choose your own photo','ed.name':'Title',
+ 'ed.printTip':'Print on <strong>matte</strong> paper, without cropping. Gloss and cropped edges break recognition.',
+ 'ed.needPoster':'Choose a print image first.','ed.saved':'Saved. Remember to prepare the project again.',
+ 'ed.loop':'loop','ed.src':'Source file: %s',
+ 'ed.badVideo':'The browser cannot play this video. Pick an MP4 (H.264) or MOV from your gallery.',
+ 'ar.aim':'Point at a photo from the book','ar.searching':'Searching…','ar.close':'Close',
+ 'ar.noCam':'Camera unavailable: %s','ar.needHttps':'The camera only works on an https address. Put the app online (GitHub Pages, for instance) and open it there.',
+ 'set.lang':'Language','set.github':'GitHub account for publishing',
+ 'set.githubP':'Needed to upload videos. Create a fine-grained token with only “Contents: read and write” on the repository you use for this.',
+ 'set.owner':'User or organisation','set.repo':'Repository','set.branch':'Branch','set.token':'Token',
+ 'set.save':'Save','set.test':'Test connection','set.clearTok':'Clear token','set.refresh':'Refresh',
+ 'set.tokenWarn':'The token stays on this device only, in browser storage. It never ends up in a project or a shared link.',
+ 'set.storage':'Storage on this device','set.about':'About',
+ 'set.aboutP':'Doorkijk 2.0 — image tracking via MindAR, video via WebGL. Everything runs in the browser; no server sees your material except the storage you choose yourself.',
+ 'set.saved':'Saved.','set.okRepo':'Connected to %s — writing allowed.','set.failRepo':'Failed: %s',
+ 'set.storLine':'%s used of roughly %s available.',
+ 'gen.items':'%s clips','gen.item':'1 clip','gen.of':'of','gen.cancelled':'Cancelled.','gen.failed':'Failed: %s',
+ 'gen.yes':'Yes','gen.no':'No','gen.back':'Back'
+}};
+let LANG = localStorage.getItem('dk-lang') || (navigator.language||'nl').slice(0,2);
+if(!STR[LANG]) LANG='nl';
+function t(k,...a){let s=(STR[LANG]&&STR[LANG][k])||STR.nl[k]||k;a.forEach(v=>s=s.replace('%s',v));return s;}
+function applyStatic(){
+  document.documentElement.lang=LANG;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{el.innerHTML=t(el.dataset.i18n);});
+  $('lang-btn').textContent=LANG.toUpperCase();
+  $('tb-sub').textContent=t('app.sub');
+}
+
+/* ==================================================================
+   2. OPSLAG / STORAGE
+   ================================================================== */
+const DB='doorkijk', VER=2;
+let db;
+function openDB(){return new Promise((res,rej)=>{
+  const r=indexedDB.open(DB,VER);
+  r.onupgradeneeded=e=>{
+    const d=r.result;
+    if(!d.objectStoreNames.contains('items'))d.createObjectStore('items',{keyPath:'id'});
+    if(!d.objectStoreNames.contains('books'))d.createObjectStore('books',{keyPath:'name'});
+    if(!d.objectStoreNames.contains('projects'))d.createObjectStore('projects',{keyPath:'id'});
+    if(!d.objectStoreNames.contains('assets'))d.createObjectStore('assets',{keyPath:'key'});
+    if(!d.objectStoreNames.contains('settings'))d.createObjectStore('settings',{keyPath:'k'});
+  };
+  r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});}
+const tx=(s,m)=>db.transaction(s,m).objectStore(s);
+const put=(s,v)=>new Promise((res,rej)=>{const r=tx(s,'readwrite').put(v);r.onsuccess=()=>res(v);r.onerror=()=>rej(r.error);});
+const del=(s,k)=>new Promise((res,rej)=>{const r=tx(s,'readwrite').delete(k);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});
+const all=s=>new Promise((res,rej)=>{const r=tx(s,'readonly').getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
+const get=(s,k)=>new Promise((res,rej)=>{const r=tx(s,'readonly').get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
+const setting=async(k,v)=>{if(v===undefined){const r=await get('settings',k);return r?r.v:undefined;} return put('settings',{k,v});};
+
+/* migratie van v1: boeken op naam -> projecten met id */
+async function migrate(){
+  if(await setting('migrated-v2')) return;
+  const items=await all('items'), books=await all('books'), projects=await all('projects');
+  const byName={}; projects.forEach(p=>{if(p.kind==='local')byName[p.name]=p;});
+  for(const it of items){
+    if(it.project) continue;
+    const nm=it.book||'Boek 1';
+    if(!byName[nm]){
+      const b=books.find(x=>x.name===nm);
+      byName[nm]=await put('projects',{id:'loc_'+uid(),kind:'local',name:nm,created:it.created||Date.now(),
+        mind:b?b.mind:null,order:b?b.order:null,quality:b?b.quality:null,built:b?b.built:0});
+    }
+    it.project=byName[nm].id;
+    await put('items',it);
+  }
+  await setting('migrated-v2',1);
+}
+
+/* ==================================================================
+   3. HULP / HELPERS
+   ================================================================== */
+const $=id=>document.getElementById(id);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const tc=s=>{s=Math.max(0,s||0);const m=Math.floor(s/60);return m+':'+String(Math.floor(s%60)).padStart(2,'0')+'.'+Math.floor(s*10%10);};
+const tcs=s=>{s=Math.max(0,s||0);return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');};
+const mb=b=>b<1024?b+' B':b<1048576?(b/1024).toFixed(0)+' kB':b<1073741824?(b/1048576).toFixed(1)+' MB':(b/1073741824).toFixed(2)+' GB';
+const slug=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,48)||'project';
+let toastT;
+function toast(m){const el=$('toast');el.textContent=m;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),2800);}
+function blobToImg(blob){return new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=URL.createObjectURL(blob);});}
+function canvasBlob(c,q=.92){return new Promise(r=>c.toBlob(r,'image/jpeg',q));}
+function b64(blob){return new Promise((res,rej)=>{const r=new FileReader();
+  r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=()=>rej(r.error);r.readAsDataURL(blob);});}
+async function shrink(blob,max){
+  const img=await blobToImg(blob);
+  const sc=Math.min(1,max/Math.max(img.width,img.height));
+  if(sc>=1)return img;
+  const c=document.createElement('canvas');
+  c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);
+  c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+  return await blobToImg(await canvasBlob(c,.95));
+}
+const extFor=ty=>({'video/mp4':'mp4','video/quicktime':'mov','video/webm':'webm','video/x-matroska':'mkv'}[ty]||'mp4');
+
+/* voortgangsvenster */
+let busyCancel=false;
+function busy(title,line,frac){
+  $('busy').classList.add('on');$('busy-t').textContent=title;
+  $('busy-p').textContent=line||'';
+  const bar=$('busy-bar');
+  if(frac==null){bar.removeAttribute('value');}else{bar.value=Math.max(0,Math.min(1,frac));}
+}
+function busyOff(){$('busy').classList.remove('on');busyCancel=false;}
+$('busy-cancel').onclick=()=>{busyCancel=true;$('busy-p').textContent='…';};
+
+/* ==================================================================
+   4. ROUTER
+   ================================================================== */
+let route={view:'home',id:null};
+function go(h){if(location.hash===h)onRoute();else location.hash=h;}
+function onRoute(){
+  const h=location.hash||'#/';
+  const openM=h.match(/^#\/open\?u=(.+)$/) || h.match(/^#p=(.+)$/);
+  if(openM){history.replaceState(null,'','#/');addRemote(parseShared(decodeURIComponent(openM[1])));return;}
+  const pm=h.match(/^#\/p\/([^\/]+)$/);
+  if(pm){route={view:'project',id:pm[1]};}
+  else if(h==='#/scan')route={view:'scan',id:null};
+  else if(h==='#/settings')route={view:'settings',id:null};
+  else route={view:'home',id:null};
+  render();
+}
+addEventListener('hashchange',onRoute);
+document.querySelectorAll('#tabbar button').forEach(b=>b.onclick=()=>go(b.dataset.go));
+$('back').onclick=()=>go('#/');
+
+async function render(){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  ['tab-home','tab-scan','tab-set'].forEach(i=>$(i).classList.remove('on'));
+  $('back').hidden = route.view!=='project';
+  window.scrollTo(0,0);
+  if(route.view==='home'){
+    $('v-home').classList.add('on');$('tab-home').classList.add('on');
+    $('tb-name').textContent='Doorkijk';$('tb-sub').textContent=t('app.sub');
+    await renderHome();
+  } else if(route.view==='scan'){
+    $('v-scan').classList.add('on');$('tab-scan').classList.add('on');
+    $('tb-name').textContent=t('nav.scan');$('tb-sub').textContent=t('app.sub');
+    await renderScan();
+  } else if(route.view==='settings'){
+    $('v-settings').classList.add('on');$('tab-set').classList.add('on');
+    $('tb-name').textContent=t('nav.more');$('tb-sub').textContent=t('app.sub');
+    await renderSettings();
+  } else if(route.view==='project'){
+    $('v-project').classList.add('on');
+    await renderProject(route.id);
+  }
+}
+
+/* ==================================================================
+   5. HOME
+   ================================================================== */
+async function projectStats(p){
+  if(p.kind==='local'){
+    const items=(await all('items')).filter(i=>i.project===p.id);
+    return {n:items.length, cover:items[0]?items[0].poster:null, ready:!!(p.mind&&p.order&&p.order.length)};
+  }
+  const m=p.manifest||{items:[]};
+  return {n:m.items.length, coverUrl:m.items[0]?absUrl(p.manifestUrl,m.items[0].poster):null, ready:true, offline:!!p.offline};
+}
+async function renderHome(){
+  const projects=await all('projects');
+  const mine=projects.filter(p=>p.kind==='local').sort((a,b)=>b.created-a.created);
+  const shared=projects.filter(p=>p.kind==='remote').sort((a,b)=>b.addedAt-a.addedAt);
+  $('mine-count').textContent=mine.length?mine.length:'';
+
+  const gm=$('grid-mine');gm.innerHTML='';
+  for(const p of mine) gm.appendChild(await pcard(p));
+  const add=document.createElement('button');add.className='pcard add';
+  add.innerHTML='<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>'+esc(t('home.addProject'))+'</span>';
+  add.onclick=newProject; gm.appendChild(add);
+
+  const gs=$('grid-shared');gs.innerHTML='';
+  if(!shared.length){gs.innerHTML='<div class="empty" style="grid-column:1/-1">'+esc(t('home.emptyShared'))+'</div>';}
+  else for(const p of shared) gs.appendChild(await pcard(p));
+}
+async function pcard(p){
+  const s=await projectStats(p);
+  const b=document.createElement('button');b.className='pcard';
+  const pills=[];
+  if(p.kind==='remote') pills.push('<span class="pill '+(s.offline?'good':'info')+'">'+(s.offline?esc(t('off.local')):esc(t('off.stream')))+'</span>');
+  else if(p.publish) pills.push('<span class="pill good">'+esc(t('share.live'))+'</span>');
+  if(p.kind==='local'&&!s.ready) pills.push('<span class="pill warn">'+esc(t('scan.notReady'))+'</span>');
+  b.innerHTML='<div class="thumb"><div class="ph">DOORKIJK</div><div class="cnt">'+s.n+'</div></div>'+
+    '<div class="body"><strong>'+esc(p.name)+'</strong><div class="sub">'+pills.join('')+'</div></div>';
+  const th=b.querySelector('.thumb');
+  if(s.cover){const im=new Image();im.src=URL.createObjectURL(s.cover);th.prepend(im);}
+  else if(s.coverUrl){const im=new Image();im.referrerPolicy='no-referrer';im.src=s.coverUrl;th.prepend(im);}
+  b.onclick=()=>go('#/p/'+p.id);
+  return b;
+}
+async function newProject(){
+  const nm=prompt(t('proj.newName'),LANG==='nl'?'Boek 1':'Book 1');
+  if(nm===null)return;
+  const p=await put('projects',{id:'loc_'+uid(),kind:'local',name:nm.trim()||'Boek 1',created:Date.now(),
+    mind:null,order:null,quality:null,built:0});
+  go('#/p/'+p.id);
+}
+$('q-new').onclick=newProject;
+$('q-scan').onclick=()=>go('#/scan');
+$('q-open').onclick=()=>openDialog('');
+
+/* ==================================================================
+   6. SCAN-OVERZICHT
+   ================================================================== */
+async function renderScan(){
+  const projects=await all('projects');
+  const host=$('scan-list');host.innerHTML='';
+  let any=false;
+  for(const p of projects){
+    const s=await projectStats(p);
+    if(!s.n) continue;
+    any=true;
+    const ready = p.kind==='remote' ? true : s.ready;
+    const d=document.createElement('div');d.className='item';
+    d.innerHTML='<img alt="">'+
+      '<div class="meta"><strong></strong><small>'+
+        (s.n===1?esc(t('gen.item')):esc(t('gen.items',s.n)))+
+        (p.kind==='remote'?' · '+(s.offline?esc(t('off.local')):esc(t('off.stream'))):'')+
+      '</small></div><div class="act"></div>';
+    d.querySelector('strong').textContent=p.name;
+    const img=d.querySelector('img');
+    if(s.cover)img.src=URL.createObjectURL(s.cover); else if(s.coverUrl){img.referrerPolicy='no-referrer';img.src=s.coverUrl;}
+    const btn=document.createElement('button');
+    btn.className='btn sm '+(ready?'primary':'ghost');
+    btn.textContent=ready?t('scan.start'):t('scan.notReady');
+    btn.disabled=!ready;
+    btn.onclick=()=>launchAR(p.id);
+    d.querySelector('.act').appendChild(btn);
+    host.appendChild(d);
+  }
+  if(!any)host.innerHTML='<div class="empty">'+esc(t('scan.none'))+'</div>';
+}
+
+/* ==================================================================
+   7. PROJECT
+   ================================================================== */
+let curProject=null, curSect='frag';
+async function renderProject(id){
+  const p=await get('projects',id);
+  if(!p){go('#/');return;}
+  curProject=p;
+  $('tb-name').textContent=p.name;
+  $('tb-sub').textContent = p.kind==='remote' ? t('home.shared') : t('home.mine');
+  const tabs = p.kind==='local'
+    ? [['frag','seg.frag'],['print','seg.print'],['share','seg.share']]
+    : [['frag','seg.frag'],['offline','seg.offline'],['share','seg.source']];
+  if(!tabs.find(x=>x[0]===curSect))curSect=tabs[0][0];
+  $('p-seg').innerHTML=tabs.map(([k,l])=>'<button data-s="'+k+'"'+(k===curSect?' class="on"':'')+'>'+esc(t(l))+'</button>').join('');
+  $('p-seg').querySelectorAll('button').forEach(b=>b.onclick=()=>{curSect=b.dataset.s;renderProject(id);});
+  ['s-frag','s-print','s-share','s-offline'].forEach(i=>$(i).classList.remove('on'));
+  $('s-'+curSect).classList.add('on');
+  if(curSect==='frag')await sectFragments(p);
+  if(curSect==='print')await sectPrint(p);
+  if(curSect==='share')await (p.kind==='local'?sectShare(p):sectSource(p));
+  if(curSect==='offline')await sectOffline(p);
+}
+
+/* ---------- fragmenten ---------- */
+async function sectFragments(p){
+  const host=$('s-frag');host.innerHTML='';
+  if(p.kind==='local'){
+    const items=(await all('items')).filter(i=>i.project===p.id).sort((a,b)=>a.created-b.created);
+    const ready=!!(p.mind&&p.order&&p.order.length);
+    const bytes=items.reduce((a,i)=>a+(i.video?i.video.size:0)+(i.poster?i.poster.size:0),0);
+    const sum=document.createElement('div');sum.className='card tight';
+    sum.innerHTML='<div class="spread"><span class="pill '+(ready?'good':'warn')+'">'+
+        esc(ready?t('pill.ready'):t('pill.notReady'))+'</span>'+
+        '<span class="hint mono" style="margin:0">'+
+          (items.length===1?esc(t('gen.item')):esc(t('gen.items',items.length)))+' · '+mb(bytes)+
+          (p.publish?' · '+esc(t('share.live')):'')+'</span></div>'+
+      '<div class="row" style="margin-top:11px">'+
+        '<button class="btn primary sm" id="btn-add">'+esc(t('proj.add'))+'</button>'+
+        (ready?'<button class="btn sm" id="btn-scan">'+esc(t('scan.start'))+'</button>':'')+
+        (ready?'':'<button class="btn sm" id="btn-prep">'+esc(t('print.compile'))+'</button>')+
+      '</div>';
+    host.appendChild(sum);
+    sum.querySelector('#btn-add').onclick=()=>$('file-video').click();
+    if(ready)sum.querySelector('#btn-scan').onclick=()=>launchAR(p.id);
+    else if(items.length)sum.querySelector('#btn-prep').onclick=()=>compile(p);
+    else sum.querySelector('#btn-prep').disabled=true;
+
+    const footer=()=>{
+      const f=document.createElement('div');f.className='row';f.style.marginTop='14px';
+      f.innerHTML='<button class="btn ghost sm" id="btn-ren">'+esc(t('proj.rename'))+'</button>'+
+        '<button class="btn ghost sm" id="btn-delp">'+esc(t('proj.delete'))+'</button>';
+      f.querySelector('#btn-ren').onclick=async()=>{
+        const nm=prompt(t('proj.newName'),p.name);if(nm===null)return;
+        p.name=nm.trim()||p.name;await put('projects',p);renderProject(p.id);};
+      f.querySelector('#btn-delp').onclick=async()=>{
+        if(!confirm(t('proj.confirmDel',p.name)))return;
+        const its=(await all('items')).filter(i=>i.project===p.id);
+        for(const i of its)await del('items',i.id);
+        await del('projects',p.id);go('#/');};
+      host.appendChild(f);
+    };
+    if(!items.length){host.insertAdjacentHTML('beforeend','<div class="empty">'+esc(t('proj.empty'))+'</div>');footer();return;}
+    for(const it of items){
+      const d=document.createElement('div');d.className='item';
+      d.innerHTML='<img alt=""><div class="meta"><strong></strong><small>'+
+        tc(it.tin)+' → '+tc(it.tout)+' · '+mb(it.video?it.video.size:0)+'</small></div>'+
+        '<div class="act"><button class="btn ghost sm">'+esc(t('proj.del'))+'</button></div>';
+      d.querySelector('img').src=URL.createObjectURL(it.poster);
+      d.querySelector('strong').textContent=it.title;
+      d.querySelector('button').onclick=async()=>{
+        if(!confirm(t('proj.confirmItem',it.title)))return;
+        await del('items',it.id);
+        p.mind=null;p.order=null;await put('projects',p);
+        renderProject(p.id);};
+      host.appendChild(d);
+    }
+    footer();
+  } else {
+    const m=p.manifest;
+    for(const it of m.items){
+      const d=document.createElement('div');d.className='item';
+      const has=p.offline?'<span class="pill good">'+esc(t('off.local'))+'</span>':'<span class="pill info">'+esc(t('off.stream'))+'</span>';
+      d.innerHTML='<img alt="" referrerpolicy="no-referrer"><div class="meta"><strong></strong><small>'+
+        tcs((it.tout||0)-(it.tin||0))+' · '+mb(it.bytes||0)+'</small></div><div class="act">'+has+'</div>';
+      d.querySelector('img').src=absUrl(p.manifestUrl,it.poster);
+      d.querySelector('strong').textContent=it.title;
+      host.appendChild(d);
+    }
+    const b=document.createElement('div');b.className='row';b.style.marginTop='12px';
+    b.innerHTML='<button class="btn primary sm">'+esc(t('scan.start'))+'</button>';
+    b.querySelector('button').onclick=()=>launchAR(p.id);
+    host.appendChild(b);
+  }
+}
+
+/* ---------- afdrukken ---------- */
+async function sectPrint(p){
+  const items=(await all('items')).filter(i=>i.project===p.id).sort((a,b)=>a.created-b.created);
+  const host=$('s-print');
+  const ready=!!(p.mind&&p.order&&p.order.length);
+  const stale=ready && (items.length!==p.order.length || items.some(i=>!p.order.includes(i.id)));
+  host.innerHTML='<div class="card">'+
+    '<p class="hint">'+esc(t('print.p'))+'</p>'+
+    '<div class="row" style="margin-top:11px">'+
+      '<button class="btn primary sm" id="do-compile">'+esc(t('print.compile'))+'</button>'+
+      '<button class="btn sm" id="do-export">'+esc(t('print.export'))+'</button>'+
+    '</div>'+
+    '<p class="hint '+(stale||!ready?'warn':'')+'" id="compile-status">'+
+      (stale?esc(t('print.stale')):ready?esc(t('print.ready',p.order.length)):esc(t('print.never')))+'</p>'+
+    '</div>';
+  $('do-compile').onclick=()=>compile(p);
+  $('do-export').onclick=()=>exportPrints(p,items);
+  if(!items.length)return;
+  host.insertAdjacentHTML('beforeend','<div class="eyebrow sp">'+esc(t('print.inProject'))+'</div>');
+  items.forEach(it=>{
+    const q=p.quality?p.quality[it.id]:null;
+    const d=document.createElement('div');d.className='item';
+    d.innerHTML='<img alt=""><div class="meta"><strong></strong><small></small></div>';
+    d.querySelector('img').src=URL.createObjectURL(it.poster);
+    d.querySelector('strong').textContent=it.title;
+    const s=d.querySelector('small');
+    if(q==null)s.textContent=t('print.notRated');
+    else s.innerHTML='<span class="pill '+(q>250?'good':'warn')+'">'+esc(t('print.points',q))+'</span> '+
+      esc(q>250?t('print.good'):t('print.poor'));
+    host.appendChild(d);
+  });
+}
+async function compile(p){
+  const items=(await all('items')).filter(i=>i.project===p.id).sort((a,b)=>a.created-b.created);
+  if(!items.length)return toast(t('proj.empty'));
+  const t0=Date.now();
+  try{
+    busy(t('print.compile'),t('up.prep'),null);
+    const Compiler=await loadCompiler();
+    busy(t('print.compile'),'…',0);
+    const imgs=[];for(const it of items)imgs.push(await shrink(it.poster,1024));
+    const compiler=new Compiler();
+    const dataList=await compiler.compileImageTargets(imgs,pr=>{
+      busy(t('print.compile'),Math.round(pr)+'%',pr/100);});
+    const buffer=await compiler.exportData();
+    const quality={};
+    dataList.forEach((d,i)=>{let n=0;try{d.trackingData.forEach(x=>n+=x.points.length);}catch(e){}quality[items[i].id]=n;});
+    p.mind=buffer;p.order=items.map(i=>i.id);p.quality=quality;p.built=Date.now();
+    await put('projects',p);
+    busyOff();
+    toast(t('print.ready',p.order.length)+' ('+Math.round((Date.now()-t0)/1000)+'s)');
+    renderProject(p.id);
+  }catch(err){busyOff();toast(t('gen.failed',err&&err.message||err));console.error(err);}
+}
+async function loadCompiler(){
+  if(window.MINDAR&&window.MINDAR.IMAGE&&window.MINDAR.IMAGE.Compiler)return window.MINDAR.IMAGE.Compiler;
+  const mod=await import('mindar-image');
+  const C=mod.Compiler||(window.MINDAR&&window.MINDAR.IMAGE&&window.MINDAR.IMAGE.Compiler);
+  if(!C)throw new Error('Compiler niet gevonden in de MindAR-bundel');
+  return C;
+}
+async function exportPrints(p,items){
+  if(!items.length)return toast(t('proj.empty'));
+  for(const [i,it] of items.entries()){
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(it.poster);
+    a.download=slug(p.name)+'-'+String(i+1).padStart(2,'0')+'-'+slug(it.title)+'.jpg';
+    a.click();await new Promise(r=>setTimeout(r,350));
+  }
+  toast(items.length+' ×');
+}
+
+/* ==================================================================
+   8. DELEN / PUBLICEREN
+   ================================================================== */
+function appBase(){return location.origin+location.pathname;}
+function shareLink(u){return appBase()+'#/open?u='+encodeURIComponent(u);}
+function absUrl(base,p){try{return new URL(p,base).href;}catch(e){return p;}}
+
+async function sectShare(p){
+  const host=$('s-share');
+  const ready=!!(p.mind&&p.order&&p.order.length);
+  const gh=(await setting('gh'))||{};
+  const pub=p.publish;
+  let html='<div class="card"><div class="eyebrow">'+esc(t('share.h'))+'</div>'+
+    '<p class="hint">'+esc(t('share.hp'))+'</p>';
+  if(!ready)html+='<p class="hint warn">'+esc(t('share.needCompile'))+'</p>';
+  html+='<label class="field"><span>'+esc(t('share.quality'))+'</span><select id="sh-q">'+
+    '<option value="720">'+esc(t('share.q.720'))+'</option>'+
+    '<option value="1080">'+esc(t('share.q.1080'))+'</option>'+
+    '<option value="480">'+esc(t('share.q.480'))+'</option>'+
+    '<option value="0">'+esc(t('share.q.orig'))+'</option></select></label>'+
+    '<p class="hint">'+esc(t('share.qP'))+'</p>'+
+    '<p class="hint mono">'+esc(t('share.fmt',(recMime()||'—').split(';')[0]))+'</p>'+
+    '<label class="field"><span>'+esc(t('share.folder'))+'</span>'+
+    '<input type="text" id="sh-path" autocapitalize="none" autocorrect="off" value="'+esc((pub&&pub.prefix)||('projects/'+slug(p.name)))+'"></label>'+
+    (gh.owner&&gh.repo?'<p class="hint mono">'+esc(gh.owner+'/'+gh.repo+' · '+(gh.branch||'main'))+'</p>'
+      :'<p class="hint warn">'+esc(t('share.needGh'))+'</p>')+
+    '<div class="row" style="margin-top:12px">'+
+      '<button class="btn primary sm" id="sh-go"'+(ready&&gh.owner&&gh.repo&&gh.token?'':' disabled')+'>'+
+        esc(pub?t('share.republish'):t('share.upload'))+'</button>'+
+      '<button class="btn sm" id="sh-zip"'+(ready?'':' disabled')+'>'+esc(t('share.bundle'))+'</button>'+
+    '</div>'+
+    '<p class="hint">'+esc(t('share.bundleP'))+'</p>'+
+    '<p class="hint">'+esc(t('share.bundleCors'))+'</p></div>';
+  if(pub){
+    html+='<div class="card"><div class="eyebrow"><span class="pill good">'+esc(t('share.live'))+'</span></div>'+
+      '<span class="hint" style="margin:0">'+esc(t('share.link'))+'</span>'+
+      '<code class="url" id="sh-link">'+esc(shareLink(pub.manifestUrl))+'</code>'+
+      '<div class="row" style="margin-top:10px">'+
+        '<button class="btn sm" id="sh-copy">'+esc(t('share.copy'))+'</button>'+
+        (navigator.share?'<button class="btn ghost sm" id="sh-native">'+esc(t('share.share'))+'</button>':'')+
+      '</div><hr class="sep">'+
+      '<span class="hint" style="margin:0">'+esc(t('share.manifest'))+'</span>'+
+      '<code class="url">'+esc(pub.manifestUrl)+'</code></div>';
+  }
+  host.innerHTML=html;
+  $('sh-go').onclick=()=>publishGithub(p,$('sh-path').value.trim(),+$('sh-q').value);
+  $('sh-zip').onclick=()=>exportBundle(p,+$('sh-q').value);
+  if(pub){
+    $('sh-copy').onclick=async()=>{try{await navigator.clipboard.writeText(shareLink(pub.manifestUrl));toast(t('share.copied'));}catch(e){toast(String(e.message||e));}};
+    if($('sh-native'))$('sh-native').onclick=()=>navigator.share({title:p.name,url:shareLink(pub.manifestUrl)}).catch(()=>{});
+  }
+}
+
+/* ---------- video hercoderen ---------- */
+/* Kies een formaat dat OOK op andere telefoons speelt.
+   Sommige browsers zeggen ja tegen 'video/mp4' maar stoppen er VP9 in — dat weigert iOS.
+   Alleen als het platform H.264 ook kan afspelen, vertrouwen we de mp4-route. */
+function recMime(){
+  const canRec=m=>!!(window.MediaRecorder&&MediaRecorder.isTypeSupported(m));
+  const canPlay=m=>window.MediaSource?MediaSource.isTypeSupported(m)
+    :(document.createElement('video').canPlayType(m)==='probably');
+  const h264=canPlay('video/mp4; codecs="avc1.42E01E"');
+  for(const m of ['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4'])
+    if(h264&&canRec(m))return m;
+  for(const m of ['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'])
+    if(canRec(m))return m;
+  for(const m of ['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4'])
+    if(canRec(m))return m;
+  return null;
+}
+/* controleert dat het resultaat echt te openen is voordat we het uploaden */
+function playable(blob){return new Promise(res=>{
+  const v=document.createElement('video');v.preload='metadata';v.muted=true;
+  const done=ok=>{clearTimeout(tm);URL.revokeObjectURL(v.src);v.removeAttribute('src');res(ok);};
+  const tm=setTimeout(()=>done(false),8000);
+  // let op: live opgenomen WebM meldt vaak duration=Infinity — dat is normaal,
+  // dus we kijken alleen of er echt beeld in zit.
+  v.onloadedmetadata=()=>done(v.videoWidth>0);
+  v.onerror=()=>done(false);
+  v.src=URL.createObjectURL(blob);});}
+async function reencode(blob,tin,tout,maxH,onProg){
+  const mime=recMime(); if(!mime) throw new Error('MediaRecorder');
+  const v=document.createElement('video');
+  v.src=URL.createObjectURL(blob);v.playsInline=true;v.setAttribute('playsinline','');v.preload='auto';
+  await new Promise((res,rej)=>{v.onloadedmetadata=res;v.onerror=()=>rej(new Error('video'));});
+  const sc=Math.min(1,maxH/(v.videoHeight||maxH));
+  const c=document.createElement('canvas');
+  c.width=Math.max(2,Math.round(v.videoWidth*sc/2)*2);
+  c.height=Math.max(2,Math.round(v.videoHeight*sc/2)*2);
+  const g=c.getContext('2d');
+  const stream=c.captureStream(30);
+  let ac=null;
+  try{
+    ac=new (window.AudioContext||window.webkitAudioContext)();
+    const src=ac.createMediaElementSource(v);
+    const dst=ac.createMediaStreamDestination();
+    src.connect(dst);                       // niet naar de luidspreker: stil opnemen
+    dst.stream.getAudioTracks().forEach(tr=>stream.addTrack(tr));
+  }catch(e){ac=null;}
+  const bps=maxH>=1080?4500000:maxH>=720?2400000:1100000;
+  const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:bps,audioBitsPerSecond:128000});
+  const chunks=[];rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+  const done=new Promise(r=>rec.onstop=r);
+  v.currentTime=tin;
+  await new Promise(r=>{v.onseeked=r;setTimeout(r,1200);});
+  let raf;const draw=()=>{g.drawImage(v,0,0,c.width,c.height);raf=requestAnimationFrame(draw);};draw();
+  rec.start(250);
+  try{
+    if(ac&&ac.state==='suspended')await ac.resume();
+    await v.play();
+  }catch(e){                       // autoplay met geluid geweigerd: dan maar zonder
+    v.muted=true;await v.play();
+  }
+  await new Promise(res=>{
+    const chk=()=>{
+      if(onProg)onProg(Math.min(1,(v.currentTime-tin)/Math.max(.1,tout-tin)));
+      if(v.currentTime>=tout-0.02||v.ended||busyCancel){res();return;}
+      setTimeout(chk,120);};
+    chk();});
+  v.pause();rec.stop();cancelAnimationFrame(raf);
+  await done;
+  try{if(ac)await ac.close();}catch(e){}
+  URL.revokeObjectURL(v.src);
+  const out=new Blob(chunks,{type:(rec.mimeType||mime).split(';')[0]});
+  if(!out.size)throw new Error('leeg resultaat');
+  if(!await playable(out))throw new Error('onbruikbaar resultaat');
+  return out;
+}
+
+/* bouwt de complete set bestanden voor een project */
+async function buildAssets(p,quality){
+  const items=(await all('items')).filter(i=>i.project===p.id);
+  const ordered=(p.order||items.map(i=>i.id)).map(id=>items.find(i=>i.id===id)).filter(Boolean);
+  const files=[],mItems=[];
+  for(const [i,it] of ordered.entries()){
+    if(busyCancel)throw new Error(t('gen.cancelled'));
+    let vb=it.video,tin=it.tin,tout=it.tout;
+    if(quality){
+      busy(t('share.h'),t('up.encode',i+1,ordered.length),0);
+      try{
+        vb=await reencode(it.video,it.tin,it.tout,quality,f=>busy(t('share.h'),t('up.encode',i+1,ordered.length),f));
+        tin=0;tout=Math.max(.2,it.tout-it.tin);
+      }catch(e){console.warn('reencode',e);}
+    }
+    const ext=extFor(vb.type);
+    files.push({name:'v/'+it.id+'.'+ext,blob:vb});
+    files.push({name:'p/'+it.id+'.jpg',blob:it.poster});
+    mItems.push({id:it.id,title:it.title,poster:'p/'+it.id+'.jpg',video:'v/'+it.id+'.'+ext,
+      type:vb.type||'video/mp4',bytes:vb.size,pw:it.pw,ph:it.ph,tin:+tin.toFixed(3),tout:+tout.toFixed(3)});
+  }
+  files.push({name:'targets.mind',blob:new Blob([p.mind],{type:'application/octet-stream'})});
+  const manifest={doorkijk:1,id:p.id,name:p.name,created:p.created,published:Date.now(),
+    generator:'Doorkijk 2.0',mind:'targets.mind',items:mItems};
+  files.push({name:'project.json',blob:new Blob([JSON.stringify(manifest,null,1)],{type:'application/json'})});
+  return {files,manifest};
+}
+
+/* ---------- GitHub ---------- */
+async function ghReq(url,opt,token){
+  const r=await fetch(url,Object.assign({},opt,{headers:Object.assign({
+    'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'},
+    (opt&&opt.headers)||{})}));
+  if(!r.ok){let m='';try{m=(await r.json()).message;}catch(e){}throw new Error('GitHub '+r.status+(m?' — '+m:''));}
+  return r.status===204?null:r.json();
+}
+async function ghPut(gh,path,blob,msg){
+  const api='https://api.github.com/repos/'+gh.owner+'/'+gh.repo+'/contents/'+path.split('/').map(encodeURIComponent).join('/');
+  let sha=null;
+  try{const ex=await ghReq(api+'?ref='+encodeURIComponent(gh.branch||'main'),{},gh.token);if(ex&&ex.sha)sha=ex.sha;}catch(e){}
+  const body={message:msg||('doorkijk: '+path),content:await b64(blob),branch:gh.branch||'main'};
+  if(sha)body.sha=sha;
+  return ghReq(api,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)},gh.token);
+}
+async function publishGithub(p,prefix,quality){
+  const gh=(await setting('gh'))||{};
+  if(!gh.owner||!gh.repo||!gh.token)return toast(t('share.needGh'));
+  prefix=(prefix||('projects/'+slug(p.name))).replace(/^\/+|\/+$/g,'');
+  busyCancel=false;
+  try{
+    busy(t('share.h'),t('up.prep'),null);
+    const {files,manifest}=await buildAssets(p,quality);
+    const big=files.find(f=>f.blob.size>95*1024*1024);
+    if(big)throw new Error(big.name+' — '+mb(big.blob.size)+' > 95 MB');
+    let doneBytes=0;const total=files.reduce((a,f)=>a+f.blob.size,0);
+    for(const f of files){
+      if(busyCancel)throw new Error(t('gen.cancelled'));
+      busy(t('share.h'),t('up.push',f.name)+' · '+mb(f.blob.size),doneBytes/Math.max(1,total));
+      await ghPut(gh,prefix+'/'+f.name,f.blob);
+      doneBytes+=f.blob.size;
+    }
+    const manifestUrl='https://raw.githubusercontent.com/'+gh.owner+'/'+gh.repo+'/'+
+      (gh.branch||'main')+'/'+prefix.split('/').map(encodeURIComponent).join('/')+'/project.json';
+    p.publish={provider:'github',owner:gh.owner,repo:gh.repo,branch:gh.branch||'main',
+      prefix,manifestUrl,publishedAt:Date.now(),quality};
+    await put('projects',p);
+    busyOff();toast(t('up.done'));renderProject(p.id);
+  }catch(e){busyOff();toast(t('gen.failed',e.message||e));console.error(e);}
+}
+
+/* ---------- ZIP (store-only) ---------- */
+const CRCT=(()=>{const t=new Uint32Array(256);
+  for(let i=0;i<256;i++){let c=i;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);t[i]=c>>>0;}return t;})();
+async function crc32(blob){
+  let c=0xFFFFFFFF;const rd=blob.stream().getReader();
+  for(;;){const{done,value}=await rd.read();if(done)break;
+    for(let i=0;i<value.length;i++)c=CRCT[(c^value[i])&255]^(c>>>8);}
+  return (c^0xFFFFFFFF)>>>0;
+}
+async function makeZip(files){
+  const enc=new TextEncoder(),parts=[],central=[];let off=0;
+  for(const f of files){
+    const nm=enc.encode(f.name),size=f.blob.size,crc=await crc32(f.blob);
+    const lh=new DataView(new ArrayBuffer(30));
+    lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0x0800,true);
+    lh.setUint32(14,crc,true);lh.setUint32(18,size,true);lh.setUint32(22,size,true);
+    lh.setUint16(26,nm.length,true);
+    parts.push(lh.buffer,nm,f.blob);
+    const ch=new DataView(new ArrayBuffer(46));
+    ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0x0800,true);
+    ch.setUint32(16,crc,true);ch.setUint32(20,size,true);ch.setUint32(24,size,true);
+    ch.setUint16(28,nm.length,true);ch.setUint32(42,off,true);
+    central.push(ch.buffer,nm);
+    off+=30+nm.length+size;
+  }
+  let cdSize=0;central.forEach(x=>cdSize+=x.byteLength);
+  const eo=new DataView(new ArrayBuffer(22));
+  eo.setUint32(0,0x06054b50,true);eo.setUint16(8,files.length,true);eo.setUint16(10,files.length,true);
+  eo.setUint32(12,cdSize,true);eo.setUint32(16,off,true);
+  return new Blob([...parts,...central,eo.buffer],{type:'application/zip'});
+}
+async function exportBundle(p,quality){
+  busyCancel=false;
+  try{
+    busy(t('share.bundle'),t('up.prep'),null);
+    const {files}=await buildAssets(p,quality);
+    busy(t('share.bundle'),'ZIP…',null);
+    const zip=await makeZip(files);
+    const a=document.createElement('a');a.href=URL.createObjectURL(zip);
+    a.download=slug(p.name)+'-doorkijk.zip';a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),20000);
+    busyOff();toast(mb(zip.size));
+  }catch(e){busyOff();toast(t('gen.failed',e.message||e));console.error(e);}
+}
+
+/* ==================================================================
+   9. PROJECT VAN IEMAND ANDERS OPENEN
+   ================================================================== */
+function parseShared(s){
+  s=(s||'').trim();if(!s)return '';
+  const m=s.match(/[#&?]u=([^&]+)/)||s.match(/#p=([^&]+)/);
+  if(m)return decodeURIComponent(m[1]);
+  return s;
+}
+async function openDialog(pref){
+  const host=$('s-share');
+  const u=prompt(t('open.h')+'\n'+t('open.p'),pref||'');
+  if(u===null)return;
+  await addRemote(parseShared(u));
+}
+async function addRemote(url){
+  if(!url)return;
+  try{
+    busy(t('open.h'),url,null);
+    const r=await fetch(url,{cache:'no-store'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const m=await r.json();
+    if(!m||m.doorkijk!==1||!Array.isArray(m.items))throw new Error(t('open.bad'));
+    const projects=await all('projects');
+    const ex=projects.find(x=>x.kind==='remote'&&x.manifestUrl===url);
+    const rec=ex||{id:'rem_'+uid(),kind:'remote',addedAt:Date.now(),offline:false};
+    rec.manifestUrl=url;rec.manifest=m;rec.name=m.name||'Project';rec.author=m.author||'';
+    await put('projects',rec);
+    busyOff();toast(ex?t('open.dup'):t('open.ok'));
+    go('#/p/'+rec.id);
+  }catch(e){
+    busyOff();
+    const msg=(e instanceof TypeError)?t('open.cors'):(e.message||String(e));
+    toast(t('gen.failed',msg));console.error(e);
+  }
+}
+async function sectSource(p){
+  const m=p.manifest;
+  $('s-share').innerHTML='<div class="card"><div class="eyebrow">'+esc(t('src.h'))+'</div>'+
+    (m.author?'<p class="hint">'+esc(t('src.by'))+': '+esc(m.author)+'</p>':'')+
+    '<p class="hint">'+esc(t('src.opened'))+': '+new Date(p.addedAt).toLocaleDateString()+'</p>'+
+    '<code class="url">'+esc(p.manifestUrl)+'</code>'+
+    '<div class="row" style="margin-top:11px">'+
+      '<button class="btn sm" id="src-ref">'+esc(t('src.refresh'))+'</button>'+
+      '<button class="btn sm" id="src-copy">'+esc(t('share.copy'))+'</button>'+
+      '<button class="btn ghost sm" id="src-forget">'+esc(t('off.forget'))+'</button>'+
+    '</div></div>';
+  $('src-ref').onclick=async()=>{await addRemote(p.manifestUrl);toast(t('src.refreshed'));};
+  $('src-copy').onclick=async()=>{try{await navigator.clipboard.writeText(shareLink(p.manifestUrl));toast(t('share.copied'));}catch(e){}};
+  $('src-forget').onclick=async()=>{
+    if(!confirm(t('proj.confirmDel',p.name)))return;
+    await dropOffline(p);await del('projects',p.id);go('#/');};
+}
+
+/* ==================================================================
+   10. OFFLINE
+   ================================================================== */
+const akey=(pid,name)=>pid+'|'+name;
+async function offlineSize(p){
+  let n=0;for(const it of p.manifest.items)n+=(it.bytes||0);
+  return n;
+}
+async function sectOffline(p){
+  const host=$('s-offline');
+  const size=await offlineSize(p);
+  host.innerHTML='<div class="card"><div class="eyebrow">'+esc(t('off.h'))+'</div>'+
+    '<div class="spread"><span class="pill '+(p.offline?'good':'info')+'">'+
+      esc(p.offline?t('off.local'):t('off.stream'))+'</span>'+
+      '<span class="hint mono" style="margin:0">'+mb(size)+'</span></div>'+
+    '<p class="hint">'+esc(p.offline?t('off.localP'):t('off.streamP'))+'</p>'+
+    '<div class="row" style="margin-top:12px">'+
+      (p.offline
+        ? '<button class="btn ghost sm" id="off-rm">'+esc(t('off.remove'))+'</button>'
+        : '<button class="btn primary sm" id="off-dl">'+esc(t('off.download',mb(size)))+'</button>')+
+      '<button class="btn sm" id="off-scan">'+esc(t('scan.start'))+'</button>'+
+    '</div></div>';
+  $('off-scan').onclick=()=>launchAR(p.id);
+  if(p.offline)$('off-rm').onclick=async()=>{await dropOffline(p);p.offline=false;await put('projects',p);renderProject(p.id);};
+  else $('off-dl').onclick=()=>downloadAll(p);
+}
+async function downloadAll(p){
+  busyCancel=false;
+  const m=p.manifest;
+  const jobs=[{n:'targets.mind',u:absUrl(p.manifestUrl,m.mind||'targets.mind')}];
+  m.items.forEach(it=>{
+    jobs.push({n:'v/'+it.id,u:absUrl(p.manifestUrl,it.video)});
+    jobs.push({n:'p/'+it.id,u:absUrl(p.manifestUrl,it.poster)});
+  });
+  try{
+    for(const [i,j] of jobs.entries()){
+      if(busyCancel)throw new Error(t('gen.cancelled'));
+      busy(t('off.h'),t('off.downloading',i+1,jobs.length),i/jobs.length);
+      const r=await fetch(j.u,{cache:'no-store'});
+      if(!r.ok)throw new Error('HTTP '+r.status+' — '+j.n);
+      await put('assets',{key:akey(p.id,j.n),blob:await r.blob()});
+    }
+    p.offline=true;p.offlineAt=Date.now();await put('projects',p);
+    busyOff();toast(t('off.done'));renderProject(p.id);
+  }catch(e){
+    busyOff();
+    const msg=(e instanceof TypeError)?t('open.cors'):(e.message||String(e));
+    toast(t('gen.failed',msg));console.error(e);
+  }
+}
+async function dropOffline(p){
+  if(!p.manifest)return;
+  const names=['targets.mind'];
+  p.manifest.items.forEach(it=>{names.push('v/'+it.id,'p/'+it.id);});
+  for(const n of names){try{await del('assets',akey(p.id,n));}catch(e){}}
+}
+
+/* ==================================================================
+   11. EDITOR
+   ================================================================== */
+let ed=null,playingClip=false;
+const V=$('ed-video');
+$('file-video').onchange=async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  if(ed&&ed.url)URL.revokeObjectURL(ed.url);
+  ed={videoBlob:f,url:URL.createObjectURL(f),in:0,out:0,dur:0,posterBlob:null,project:curProject?curProject.id:null};
+  V.src=ed.url;$('sheet-ed').classList.add('on');$('poster-wrap').hidden=true;
+  $('ed-title').value=f.name.replace(/\.[^.]+$/,'');
+  $('ed-size').textContent=t('ed.src',mb(f.size));
+  try{await V.play();}catch(err){}
+  V.pause();
+};
+V.onloadedmetadata=()=>{if(!ed)return;ed.dur=V.duration||0;ed.in=0;ed.out=ed.dur;drawStrip();paintStrip();buildThumbs();};
+V.onerror=()=>{if(!ed)return;toast(t('ed.badVideo'));closeEd();};
+V.ontimeupdate=()=>{
+  if(!ed||!ed.dur)return;
+  $('playhead').style.left=(V.currentTime/ed.dur*100)+'%';
+  if(playingClip&&V.currentTime>=ed.out-0.03)V.currentTime=ed.in;
+};
+function drawStrip(){$('lab-in').textContent=tc(ed.in);$('lab-out').textContent=tc(ed.out);
+  $('lab-dur').textContent=tc(ed.out-ed.in)+' '+t('ed.loop');}
+function paintStrip(){
+  const a=ed.in/ed.dur*100,b=ed.out/ed.dur*100;
+  $('h-in').style.left=a+'%';$('h-out').style.left=b+'%';
+  $('dim-l').style.width=a+'%';$('dim-r').style.width=(100-b)+'%';
+}
+async function buildThumbs(){
+  const host=$('strip-frames');host.innerHTML='';
+  const n=8,tmp=document.createElement('video');
+  tmp.src=ed.url;tmp.muted=true;tmp.playsInline=true;
+  await new Promise(r=>{tmp.onloadeddata=r;setTimeout(r,2500);});
+  const c=document.createElement('canvas');c.width=90;c.height=60;const g=c.getContext('2d');
+  for(let i=0;i<n;i++){
+    if(!ed)return;
+    tmp.currentTime=ed.dur*(i+.5)/n;
+    await new Promise(r=>{tmp.onseeked=r;setTimeout(r,900);});
+    try{g.drawImage(tmp,0,0,c.width,c.height);}catch(e){}
+    const im=new Image();im.src=c.toDataURL('image/jpeg',.6);host.appendChild(im);
+  }
+  tmp.src='';
+}
+function dragHandle(el,which){
+  const rail=$('strip');
+  const move=e=>{
+    const x=e.touches?e.touches[0].clientX:e.clientX;
+    const r=rail.getBoundingClientRect();
+    const tt=Math.min(1,Math.max(0,(x-r.left)/r.width))*ed.dur;
+    if(which==='in')ed.in=Math.min(tt,ed.out-.2);else ed.out=Math.max(tt,ed.in+.2);
+    V.currentTime=which==='in'?ed.in:ed.out;drawStrip();paintStrip();
+  };
+  const up=()=>{document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);};
+  el.addEventListener('pointerdown',e=>{e.preventDefault();
+    document.addEventListener('pointermove',move);document.addEventListener('pointerup',up);});
+}
+dragHandle($('h-in'),'in');dragHandle($('h-out'),'out');
+$('strip').addEventListener('pointerdown',e=>{
+  if(!ed||e.target.classList.contains('strip-handle'))return;
+  const r=e.currentTarget.getBoundingClientRect();
+  V.currentTime=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width))*ed.dur;
+});
+$('set-in').onclick=()=>{if(!ed)return;ed.in=Math.min(V.currentTime,ed.out-.2);drawStrip();paintStrip();};
+$('set-out').onclick=()=>{if(!ed)return;ed.out=Math.max(V.currentTime,ed.in+.2);drawStrip();paintStrip();};
+$('ed-play').onclick=()=>{
+  if(!ed)return;
+  if(playingClip){V.pause();playingClip=false;$('ed-play').textContent=t('ed.play');return;}
+  V.currentTime=ed.in;V.play();playingClip=true;$('ed-play').textContent=t('ed.pause');
+};
+$('grab-frame').onclick=async()=>{
+  if(!ed||!V.videoWidth)return;
+  const c=document.createElement('canvas');
+  c.width=V.videoWidth;c.height=V.videoHeight;
+  c.getContext('2d').drawImage(V,0,0);
+  setPoster(await canvasBlob(c,.95),c.width,c.height);
+};
+$('pick-photo').onclick=()=>$('file-photo').click();
+$('file-photo').onchange=async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  const img=await blobToImg(f);setPoster(f,img.width,img.height);
+};
+function setPoster(blob,w,h){
+  ed.posterBlob=blob;ed.pw=w;ed.ph=h;
+  $('poster-prev').src=URL.createObjectURL(blob);
+  $('poster-wrap').hidden=false;
+  $('poster-dims').textContent=w+'×'+h+' px · ~'+Math.round(Math.max(w,h)/(15/2.54))+' dpi @10×15';
+}
+function closeEd(){
+  $('sheet-ed').classList.remove('on');V.pause();playingClip=false;
+  $('ed-play').textContent=t('ed.play');
+  if(ed&&ed.url)URL.revokeObjectURL(ed.url);
+  V.removeAttribute('src');V.load();ed=null;
+}
+$('ed-close').onclick=closeEd;
+$('save-item').onclick=async()=>{
+  if(!ed)return;
+  if(!ed.posterBlob)return toast(t('ed.needPoster'));
+  const pid=ed.project||(curProject&&curProject.id);
+  if(!pid)return toast('?');
+  await put('items',{id:uid(),project:pid,title:$('ed-title').value.trim()||'—',
+    video:ed.videoBlob,poster:ed.posterBlob,pw:ed.pw,ph:ed.ph,
+    tin:ed.in,tout:ed.out,created:Date.now()});
+  const p=await get('projects',pid);
+  if(p){p.mind=null;p.order=null;await put('projects',p);}
+  closeEd();toast(t('ed.saved'));
+  if(route.view==='project')renderProject(pid);
+};
+
+/* ==================================================================
+   12. AR
+   ================================================================== */
+let mind=null,ctx=null,arUrls=[];
+async function resolvePlay(pid){
+  const p=await get('projects',pid);
+  if(!p)throw new Error('?');
+  if(p.kind==='local'){
+    if(!p.mind||!p.order)throw new Error(t('print.never'));
+    const items=await all('items');
+    const list=p.order.map(id=>items.find(i=>i.id===id)).filter(Boolean).map(it=>({
+      id:it.id,title:it.title,tin:it.tin,tout:it.tout,pw:it.pw,ph:it.ph,
+      src:URL.createObjectURL(it.video),remote:false}));
+    return {name:p.name,mind:p.mind,items:list};
+  }
+  const m=p.manifest;
+  let mindBuf;
+  if(p.offline){
+    const a=await get('assets',akey(p.id,'targets.mind'));
+    if(!a)throw new Error('targets.mind');
+    mindBuf=await a.blob.arrayBuffer();
+  }else{
+    const r=await fetch(absUrl(p.manifestUrl,m.mind||'targets.mind'),{cache:'force-cache'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    mindBuf=await r.arrayBuffer();
+  }
+  const list=[];
+  for(const it of m.items){
+    let src,remote=true;
+    if(p.offline){
+      const a=await get('assets',akey(p.id,'v/'+it.id));
+      if(a){src=URL.createObjectURL(a.blob);remote=false;}
+    }
+    if(!src)src=absUrl(p.manifestUrl,it.video);
+    list.push({id:it.id,title:it.title,tin:it.tin||0,tout:it.tout||0,pw:it.pw,ph:it.ph,src,remote});
+  }
+  return {name:p.name,mind:mindBuf,items:list};
+}
+async function launchAR(pid){
+  if(!window.isSecureContext)return toast(t('ar.needHttps'));
+  try{
+    busy(t('scan.start'),t('up.prep'),null);
+    const play=await resolvePlay(pid);
+    busyOff();
+    await startAR(play);
+  }catch(e){busyOff();toast(t('gen.failed',e.message||e));console.error(e);}
+}
+async function startAR(play){
+  $('ar').classList.add('on');
+  const mindURL=URL.createObjectURL(new Blob([play.mind]));
+  arUrls=[mindURL].concat(play.items.filter(i=>!i.remote).map(i=>i.src));
+  mind=new MindARThree({container:$('ar-container'),imageTargetSrc:mindURL,
+    uiLoading:'no',uiScanning:'no',uiError:'no',filterMinCF:.0001,filterBeta:.005});
+  const {renderer,scene,camera}=mind;
+  ctx={active:null,planes:[]};
+
+  play.items.forEach((it,i)=>{
+    const vid=document.createElement('video');
+    if(it.remote)vid.crossOrigin='anonymous';
+    vid.loop=false;vid.muted=true;vid.playsInline=true;
+    vid.preload=it.remote?'metadata':'auto';
+    vid.setAttribute('playsinline','');vid.setAttribute('webkit-playsinline','');
+    vid.src=it.src;
+    const dur=()=>it.tout>it.tin?it.tout:(vid.duration||0);
+    vid.addEventListener('timeupdate',()=>{
+      const out=it.tout>it.tin?it.tout:vid.duration;
+      if(out&&vid.currentTime>=out-.05)vid.currentTime=it.tin||0;});
+    vid.addEventListener('waiting',()=>{if(ctx&&ctx.active&&ctx.active.vid===vid)$('ar-spin').classList.add('on');});
+    vid.addEventListener('playing',()=>$('ar-spin').classList.remove('on'));
+    const tex=new THREE.VideoTexture(vid);tex.colorSpace=THREE.SRGBColorSpace;
+    const ar=(it.ph||3)/(it.pw||4);
+    const mesh=new THREE.Mesh(new THREE.PlaneGeometry(1,ar),
+      new THREE.MeshBasicMaterial({map:tex,toneMapped:false}));
+    const anchor=mind.addAnchor(i);
+    anchor.group.add(mesh);
+    vid.addEventListener('loadedmetadata',()=>{
+      const va=vid.videoHeight/vid.videoWidth;
+      if(va>ar){tex.repeat.set(1,ar/va);tex.offset.set(0,(1-ar/va)/2);}
+      else{tex.repeat.set(va/ar,1);tex.offset.set((1-va/ar)/2,0);}
+    });
+    const rec={it,vid,dur};ctx.planes.push(rec);
+    anchor.onTargetFound=()=>{
+      ctx.planes.forEach(p=>{if(p!==rec)p.vid.pause();});
+      ctx.active=rec;
+      const out=it.tout>it.tin?it.tout:vid.duration;
+      if(vid.currentTime<(it.tin||0)||(out&&vid.currentTime>out))vid.currentTime=it.tin||0;
+      if(vid.readyState<3)$('ar-spin').classList.add('on');
+      vid.play().catch(()=>{});
+      $('ar-title').textContent=it.title;$('ar-title').classList.add('live');
+      $('ar-bottom').classList.add('on');$('ar-hint').style.display='none';
+      $('ar-toggle').textContent='❚❚';
+    };
+    anchor.onTargetLost=()=>{
+      vid.pause();
+      if(ctx&&ctx.active===rec){ctx.active=null;$('ar-spin').classList.remove('on');
+        $('ar-title').textContent=t('ar.searching');$('ar-title').classList.remove('live');
+        $('ar-bottom').classList.remove('on');$('ar-hint').style.display='';}
+    };
+  });
+  try{await mind.start();}
+  catch(e){toast(t('ar.noCam',e.message||e));return closeAR();}
+  renderer.setAnimationLoop(()=>{renderer.render(scene,camera);tick();});
+}
+function tick(){
+  const a=ctx&&ctx.active;if(!a)return;
+  const tin=a.it.tin||0,out=a.it.tout>tin?a.it.tout:(a.vid.duration||0);
+  const d=Math.max(.1,out-tin);
+  const pr=Math.min(1,Math.max(0,(a.vid.currentTime-tin)/d));
+  $('seek-fill').style.width=(pr*100)+'%';
+  $('seek-knob').style.left=(pr*100)+'%';
+  try{
+    if(a.vid.buffered.length){
+      const be=a.vid.buffered.end(a.vid.buffered.length-1);
+      $('seek-buf').style.width=Math.min(100,Math.max(0,(be-tin)/d*100))+'%';
+    }
+  }catch(e){}
+  $('ar-time').textContent=tcs(a.vid.currentTime-tin)+' / '+tcs(d);
+}
+$('ar-toggle').onclick=()=>{const a=ctx&&ctx.active;if(!a)return;
+  if(a.vid.paused){a.vid.play();$('ar-toggle').textContent='❚❚';}
+  else{a.vid.pause();$('ar-toggle').textContent='▶';}};
+$('ar-mute').onclick=()=>{const a=ctx&&ctx.active;if(!a)return;
+  a.vid.muted=!a.vid.muted;$('ar-mute').textContent=a.vid.muted?'🔇':'🔊';};
+(()=>{const s=$('ar-seek');
+  const seek=e=>{const a=ctx&&ctx.active;if(!a)return;
+    const r=s.getBoundingClientRect();
+    const f=Math.min(1,Math.max(0,((e.touches?e.touches[0].clientX:e.clientX)-r.left)/r.width));
+    const tin=a.it.tin||0,out=a.it.tout>tin?a.it.tout:(a.vid.duration||0);
+    a.vid.currentTime=tin+f*Math.max(.1,out-tin);tick();};
+  s.addEventListener('pointerdown',e=>{e.preventDefault();seek(e);
+    const mv=ev=>seek(ev),up=()=>{document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);};
+    document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);});})();
+$('ar-close').onclick=closeAR;
+function closeAR(){
+  try{if(mind){if(mind.renderer)mind.renderer.setAnimationLoop(null);mind.stop();}}catch(e){}
+  if(ctx)ctx.planes.forEach(p=>{p.vid.pause();p.vid.removeAttribute('src');p.vid.load();});
+  arUrls.forEach(u=>{try{URL.revokeObjectURL(u);}catch(e){}});arUrls=[];
+  $('ar-container').innerHTML='';mind=null;ctx=null;
+  $('ar').classList.remove('on');$('ar-hint').style.display='';$('ar-spin').classList.remove('on');
+  $('ar-bottom').classList.remove('on');$('ar-title').classList.remove('live');
+}
+
+/* ==================================================================
+   13. INSTELLINGEN
+   ================================================================== */
+async function renderSettings(){
+  const gh=(await setting('gh'))||{};
+  $('gh-owner').value=gh.owner||'';$('gh-repo').value=gh.repo||'';
+  $('gh-branch').value=gh.branch||'main';$('gh-token').value=gh.token||'';
+  document.querySelectorAll('[data-lang]').forEach(b=>{
+    b.classList.toggle('primary',b.dataset.lang===LANG);});
+  $('app-url').textContent=appBase();
+  storLine();
+}
+async function storLine(){
+  try{
+    const e=await navigator.storage.estimate();
+    $('stor-line').textContent=t('set.storLine',mb(e.usage||0),mb(e.quota||0));
+  }catch(err){$('stor-line').textContent='—';}
+}
+$('stor-refresh').onclick=storLine;
+$('gh-save').onclick=async()=>{
+  await setting('gh',{owner:$('gh-owner').value.trim(),repo:$('gh-repo').value.trim(),
+    branch:$('gh-branch').value.trim()||'main',token:$('gh-token').value.trim()});
+  $('gh-status').textContent=t('set.saved');toast(t('set.saved'));
+};
+$('gh-clear').onclick=async()=>{
+  const gh=(await setting('gh'))||{};gh.token='';await setting('gh',gh);
+  $('gh-token').value='';toast(t('set.saved'));
+};
+$('gh-test').onclick=async()=>{
+  const gh={owner:$('gh-owner').value.trim(),repo:$('gh-repo').value.trim(),
+    branch:$('gh-branch').value.trim()||'main',token:$('gh-token').value.trim()};
+  $('gh-status').textContent='…';
+  try{
+    const r=await ghReq('https://api.github.com/repos/'+gh.owner+'/'+gh.repo,{},gh.token);
+    const ok=r.permissions&&r.permissions.push;
+    $('gh-status').textContent=ok?t('set.okRepo',r.full_name):t('set.failRepo','read-only');
+    if(ok)await setting('gh',gh);
+  }catch(e){$('gh-status').textContent=t('set.failRepo',e.message||e);}
+};
+document.querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>setLang(b.dataset.lang));
+$('lang-btn').onclick=()=>setLang(LANG==='nl'?'en':'nl');
+function setLang(l){LANG=l;localStorage.setItem('dk-lang',l);applyStatic();render();}
+
+/* ==================================================================
+   14. START
+   ================================================================== */
+addEventListener('unhandledrejection',e=>{console.error(e.reason);toast('⚠ '+((e.reason&&e.reason.message)||e.reason));});
+addEventListener('error',e=>{if(e.message)toast('⚠ '+e.message);});
+
+(async()=>{
+  db=await openDB();
+  await migrate();
+  if(navigator.storage&&navigator.storage.persist){try{await navigator.storage.persist();}catch(e){}}
+  applyStatic();
+  onRoute();
+})();
+</script>
+</body>
+</html>
